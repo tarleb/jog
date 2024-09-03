@@ -31,9 +31,11 @@ local function run_filter_function (fn, element, context)
   local result = fn(element, context)
   if result == nil then
     return element
-  elseif ptype(result) == 'Inline' then
+  end
+  local tp = ptype(result)
+  if tp == 'Inline' then
     return pandoc.Inlines{result}
-  elseif ptype(result) == 'Block' then
+  elseif tp == 'Block' then
     return pandoc.Blocks{result}
   else
     return result
@@ -145,8 +147,25 @@ local function recurse (element, filter, context, tp)
   elseif List{'TableHead', 'TableFoot'}:includes(tp) then
     element.rows    = jog(element.rows, filter, context)
   elseif listy_type[tp] then
-    local results = element:map(apply_jog(filter, context))
-    concat_into(results, element)
+    local orig_len = #element
+    local pos = 0
+    for _, sublist_or_element in ipairs(element) do
+      sublist_or_element = jog(sublist_or_element, filter, context)
+      local tp = ptype(sublist_or_element)
+      if listy_type[tp] or tp == 'table' then
+        for _, element in ipairs(sublist_or_element) do
+          pos = pos + 1
+          element[pos] = element
+        end
+      else
+        pos = pos + 1
+        element[pos] = sublist_or_element
+      end
+    end
+    -- unset remaining indices if the new list is shorter than the old
+    for i = pos + 1, orig_len do
+      element[i] = nil
+    end
   elseif tp == 'Pandoc' then
     element.meta = jog(element.meta, filter, context)
     element.blocks = jog(element.blocks, filter, context)
@@ -170,9 +189,11 @@ local function get_filter_function(element, filter)
   if non_joggable_types[tp] or tp == 'table' then
     return nil
   elseif tp == 'Block' then
-    return filter[element.t] or filter.Block
+    local et = element.t
+    return filter[et] or filter.Block
   elseif tp == 'Inline' then
-    return filter[element.t] or filter.Inline
+    local et = element.t
+    return filter[et] or filter.Inline
   else
     return filter[tp]
   end
