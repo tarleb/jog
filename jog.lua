@@ -10,7 +10,16 @@ local debug_getmetatable = debug.getmetatable
 --- Get the element type; like pandoc.utils.type, but faster.
 local function ptype (x)
   local mt = debug_getmetatable(x)
-  return mt and mt.__name:gsub('pandoc ', '') or type(x)
+  if mt then
+    -- local n = mt.__name
+    -- local result = n:gsub('pandoc ', '')
+    -- if n ~= result then
+    --   print(n, result)
+    -- end
+    return mt.__name -- mt.__name:gsub('pandoc ', '') doesn't seem to come up here?
+  else
+    return type(x)
+  end
 end
 
 --- Checks whether the object is a list type.
@@ -127,7 +136,9 @@ local function recurse (element, filter, context, tp)
       element[key] = jog(value, filter, context)
     end
   elseif content_only_node_tags[tag] or tp == 'Cell' then
-    element.content = jog(element.content, filter, context)
+    local old_content = element.content
+    local new_content = jog(old_content, filter, context)
+    element.content = new_content
   elseif tag == 'Image' then
     element.caption = jog(element.caption, filter, context)
   elseif tag == 'Table' then
@@ -144,7 +155,7 @@ local function recurse (element, filter, context, tp)
     end
   elseif tp == 'Row' then
     element.cells    = jog(element.cells, filter, context)
-  elseif List{'TableHead', 'TableFoot'}:includes(tp) then
+  elseif tp == 'TableHead' or tp == 'TableFoot' then
     element.rows    = jog(element.rows, filter, context)
   elseif listy_type[tp] then
     local orig_len = #element
@@ -189,10 +200,10 @@ local function get_filter_function(element, filter)
   if non_joggable_types[tp] or tp == 'table' then
     return nil
   elseif tp == 'Block' then
-    local et = element.t
+    local et = element.tag
     return filter[et] or filter.Block
   elseif tp == 'Inline' then
-    local et = element.t
+    local et = element.tag
     return filter[et] or filter.Inline
   else
     return filter[tp]
