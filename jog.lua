@@ -125,17 +125,24 @@ local function recurse (element, filter, context, tp)
   elseif listy_type[tp] then
     local orig_len = #element
     local pos = 0
-    -- for _, sublist_or_element in ipairs(element) do
     local element_index = 1
     local sublist_or_element = element[element_index]
     while sublist_or_element ~= nil do
       sublist_or_element = jog(sublist_or_element, filter, context)
       local tp = ptype(sublist_or_element)
       if listy_type[tp] or tp == 'table' then
-        for _, element in ipairs(sublist_or_element) do
+        local subelement_index = 1
+        local subsubelement = sublist_or_element[subelement_index]
+        while subsubelement ~= nil do
           pos = pos + 1
-          element[pos] = element
+          element[pos] = subsubelement
+          subelement_index = subelement_index + 1
+          subsubelement = sublist_or_element[subelement_index]
         end
+        -- for _, element in ipairs(sublist_or_element) do
+        --   pos = pos + 1
+        --   element[pos] = element
+        -- end
       else
         pos = pos + 1
         element[pos] = sublist_or_element
