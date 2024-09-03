@@ -14,12 +14,11 @@ local function ptype (x)
 end
 
 --- Checks whether the object is a list type.
-local function is_listy (x)
-  local tp = ptype(x)
-  return tp == 'Blocks'
-    or tp == 'Inlines'
-    or tp == 'List'
-end
+local listy_type = {
+  Blocks = true,
+  Inlines = true,
+  List = true,
+}
 
 --- Function to traverse the pandoc AST.
 local jog
@@ -98,8 +97,8 @@ local function concat_into(items, target)
   local orig_len = #target
   local pos = 0
   for _, sublist_or_element in ipairs(items) do
-    if is_listy(sublist_or_element) or
-       ptype(sublist_or_element) == 'table' then
+    local tp = ptype(sublist_or_element)
+    if listy_type[tp] or tp == 'table' then
       for _, element in ipairs(sublist_or_element) do
         pos = pos + 1
         target[pos] = element
@@ -116,9 +115,9 @@ local function concat_into(items, target)
 end
 
 --- Apply the filter on the nodes below the given element.
-local function recurse (element, filter, context)
+local function recurse (element, filter, context, tp)
+  tp = tp or ptype(element)
   local tag = element.tag
-  local tp = ptype(element)
   if leaf_node_tags[tag] then
     -- do nothing, cannot traverse any deeper
   elseif tp == 'table' then
@@ -145,7 +144,7 @@ local function recurse (element, filter, context)
     element.cells    = jog(element.cells, filter, context)
   elseif List{'TableHead', 'TableFoot'}:includes(tp) then
     element.rows    = jog(element.rows, filter, context)
-  elseif is_listy(element) then
+  elseif listy_type[tp] then
     local results = element:map(apply_jog(filter, context))
     concat_into(results, element)
   elseif tp == 'Pandoc' then
@@ -187,10 +186,10 @@ jog = function (element, filter, context)
   if non_joggable_types[tp] then
     result = element
   elseif tp == 'table' then
-    result = recurse(element, filter, context)
+    result = recurse(element, filter, context, tp)
   else
     local fn = get_filter_function(element, filter)
-    element = recurse(element, filter, context)
+    element = recurse(element, filter, context, tp)
     result = run_filter_function(fn, element, context)
   end
 
