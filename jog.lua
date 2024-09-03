@@ -203,6 +203,7 @@ local function add_method(funname)
   funname = funname or 'jog'
   pandoc.Space()          -- init metatable 'Inline'
   pandoc.HorizontalRule() -- init metatable 'Block'
+  pandoc.Meta{}           -- init metatable 'Pandoc'
   pandoc.Pandoc{}         -- init metatable 'Pandoc'
   pandoc.Blocks{}         -- init metatable 'Blocks'
   pandoc.Inlines{}        -- init metatable 'Inlines'
@@ -236,6 +237,7 @@ local mt = {
     return jog(...)
   end
 }
+
 local M = setmetatable({}, mt)
 M.jog = jog
 M.add_method = add_method
