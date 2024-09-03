@@ -139,10 +139,6 @@ local function recurse (element, filter, context, tp)
           subelement_index = subelement_index + 1
           subsubelement = sublist_or_element[subelement_index]
         end
-        -- for _, element in ipairs(sublist_or_element) do
-        --   pos = pos + 1
-        --   element[pos] = element
-        -- end
       else
         pos = pos + 1
         element[pos] = sublist_or_element
