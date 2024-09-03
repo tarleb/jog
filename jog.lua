@@ -121,6 +121,10 @@ local function recurse (element, filter, context)
   local tp = ptype(element)
   if leaf_node_tags[tag] then
     -- do nothing, cannot traverse any deeper
+  elseif tp == 'table' then
+    for key, value in pairs(element) do
+      element[key] = jog(value, filter, context)
+    end
   elseif content_only_node_tags[tag] or tp == 'Cell' then
     element.content = jog(element.content, filter, context)
   elseif tag == 'Image' then
@@ -133,6 +137,10 @@ local function recurse (element, filter, context)
   elseif tag == 'Figure' then
     element.caption = jog(element.caption, filter, context)
     element.content = jog(element.content, filter, context)
+  elseif tp == 'Meta' then
+    for key, value in pairs(element) do
+      element[key] = jog(value, filter, context)
+    end
   elseif tp == 'Row' then
     element.cells    = jog(element.cells, filter, context)
   elseif List{'TableHead', 'TableFoot'}:includes(tp) then
@@ -165,10 +173,7 @@ jog = function (element, filter, context)
   if non_joggable_types[tp] then
     result = element
   elseif tp == 'table' then
-    for key, value in pairs(element) do
-      element[key] = jog(value, filter, context)
-    end
-    result = element
+    result = recurse(element, filter, context)
   elseif is_listy(element) then
     element = recurse(element, filter, context)
     result = run_filter_function(filter[tp], element, context)
@@ -181,9 +186,7 @@ jog = function (element, filter, context)
     local fn = filter[element.t] or filter.Inline
     result = run_filter_function(fn, element, context)
   elseif tp == 'Meta' then
-    for key, value in pairs(element) do
-      element[key] = jog(value, filter, context)
-    end
+    element = recurse(element, filter, context)
     result = run_filter_function(filter.Meta, element, context)
   elseif tp == 'Pandoc' then
     element = recurse(element, filter, context)
