@@ -125,7 +125,10 @@ local function recurse (element, filter, context, tp)
   elseif listy_type[tp] then
     local orig_len = #element
     local pos = 0
-    for _, sublist_or_element in ipairs(element) do
+    -- for _, sublist_or_element in ipairs(element) do
+    local element_index = 1
+    local sublist_or_element = element[element_index]
+    while sublist_or_element ~= nil do
       sublist_or_element = jog(sublist_or_element, filter, context)
       local tp = ptype(sublist_or_element)
       if listy_type[tp] or tp == 'table' then
@@ -137,6 +140,8 @@ local function recurse (element, filter, context, tp)
         pos = pos + 1
         element[pos] = sublist_or_element
       end
+      element_index = element_index + 1
+      sublist_or_element = element[element_index]
     end
     -- unset remaining indices if the new list is shorter than the old
     for i = pos + 1, orig_len do
