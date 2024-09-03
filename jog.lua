@@ -165,6 +165,20 @@ local non_joggable_types = {
   ['string'] = true,
 }
 
+local function get_filter_function(element, filter)
+  local tp = ptype(element)
+  local result = nil
+  if non_joggable_types[tp] or tp == 'table' then
+    return nil
+  elseif tp == 'Block' then
+    return filter[element.t] or filter.Block
+  elseif tp == 'Inline' then
+    return filter[element.t] or filter.Inline
+  else
+    return filter[tp]
+  end
+end
+
 jog = function (element, filter, context)
   context = context or List{}
   context:insert(element)
@@ -174,30 +188,10 @@ jog = function (element, filter, context)
     result = element
   elseif tp == 'table' then
     result = recurse(element, filter, context)
-  elseif is_listy(element) then
-    element = recurse(element, filter, context)
-    result = run_filter_function(filter[tp], element, context)
-  elseif tp == 'Block' then
-    element = recurse(element, filter, context)
-    local fn = filter[element.t] or filter.Block
-    result = run_filter_function(fn, element, context)
-  elseif tp == 'Inline' then
-    element = recurse(element, filter, context)
-    local fn = filter[element.t] or filter.Inline
-    result = run_filter_function(fn, element, context)
-  elseif tp == 'Meta' then
-    element = recurse(element, filter, context)
-    result = run_filter_function(filter.Meta, element, context)
-  elseif tp == 'Pandoc' then
-    element = recurse(element, filter, context)
-    result = run_filter_function(filter.Pandoc, element, context)
-  elseif List{'TableHead', 'TableFoot', 'Row', 'Cell'}:includes(tp) then
-    element = recurse(element, filter, context)
-    result = run_filter_function(filter[tp], element, context)
   else
-    warn("Don't know how to handle element ", tostring(element),
-         ' of type ', tp, '\n')
-    result = element
+    local fn = get_filter_function(element, filter)
+    element = recurse(element, filter, context)
+    result = run_filter_function(fn, element, context)
   end
 
   context:remove() -- remove this element from the context
