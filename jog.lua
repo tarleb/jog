@@ -197,4 +197,47 @@ jog = function (element, filter, context)
   return result
 end
 
-return jog
+--- Add `jog` as a method to all pandoc AST elements
+-- This uses undocumented features and might break!
+local function add_method(funname)
+  funname = funname or 'jog'
+  pandoc.Space()          -- init metatable 'Inline'
+  pandoc.HorizontalRule() -- init metatable 'Block'
+  pandoc.Pandoc{}         -- init metatable 'Pandoc'
+  pandoc.Blocks{}         -- init metatable 'Blocks'
+  pandoc.Inlines{}        -- init metatable 'Inlines'
+  pandoc.Cell{}           -- init metatable 'pandoc Cell'
+  pandoc.Row{}            -- init metatable 'pandoc Row'
+  pandoc.TableHead{}      -- init metatable 'pandoc TableHead'
+  pandoc.TableFoot{}      -- init metatable 'pandoc TableFoot'
+  local reg = debug.getregistry()
+  List{
+    'Block', 'Inline', 'Pandoc',
+    'pandoc Cell', 'pandoc Row', 'pandoc TableHead', 'pandoc TableFoot'
+  }:map(
+    function (name)
+      if reg[name] then
+        reg[name].methods[funname] = jog
+      end
+    end
+       )
+  for name in pairs(listy_type) do
+    if reg[name] then
+      reg[name][funname] = jog
+    end
+  end
+  if reg['Meta'] then
+    reg['Meta'][funname] = jog
+  end
+end
+
+local mt = {
+  __call = function (_, ...)
+    return jog(...)
+  end
+}
+local M = setmetatable({}, mt)
+M.jog = jog
+M.add_method = add_method
+
+return M
