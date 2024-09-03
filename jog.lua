@@ -11,11 +11,6 @@ local debug_getmetatable = debug.getmetatable
 local function ptype (x)
   local mt = debug_getmetatable(x)
   if mt then
-    -- local n = mt.__name
-    -- local result = n:gsub('pandoc ', '')
-    -- if n ~= result then
-    --   print(n, result)
-    -- end
     return mt.__name -- mt.__name:gsub('pandoc ', '') doesn't seem to come up here?
   else
     return type(x)
@@ -95,36 +90,6 @@ local content_only_node_tags = {
   Note = true,
 }
 
---- Partially applied version of `jog`.
-local apply_jog = function (filter, context)
-  return function (element)
-    return jog(element, filter, context)
-  end
-end
-
---- Concatenate all items into the given target table.
-local function concat_into(items, target)
-  -- unset all numerical indices
-  local orig_len = #target
-  local pos = 0
-  for _, sublist_or_element in ipairs(items) do
-    local tp = ptype(sublist_or_element)
-    if listy_type[tp] or tp == 'table' then
-      for _, element in ipairs(sublist_or_element) do
-        pos = pos + 1
-        target[pos] = element
-      end
-    else
-      pos = pos + 1
-      target[pos] = sublist_or_element
-    end
-  end
-  -- unset remaining indices if the new list is shorter than the old
-  for i = pos + 1, orig_len do
-    target[i] = nil
-  end
-end
-
 --- Apply the filter on the nodes below the given element.
 local function recurse (element, filter, context, tp)
   tp = tp or ptype(element)
@@ -194,8 +159,7 @@ local non_joggable_types = {
   ['string'] = true,
 }
 
-local function get_filter_function(element, filter)
-  local tp = ptype(element)
+local function get_filter_function(element, filter, tp)
   local result = nil
   if non_joggable_types[tp] or tp == 'table' then
     return nil
@@ -220,7 +184,7 @@ jog = function (element, filter, context)
   elseif tp == 'table' then
     result = recurse(element, filter, context, tp)
   else
-    local fn = get_filter_function(element, filter)
+    local fn = get_filter_function(element, filter, tp)
     element = recurse(element, filter, context, tp)
     result = run_filter_function(fn, element, context)
   end
