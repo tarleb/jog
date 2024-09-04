@@ -122,10 +122,12 @@ local function recurse (element, filter, context, tp)
     element.rows    = jog(element.rows, filter, context)
   elseif tp == 'Blocks' or tp == 'Inlines' then
     local pos = 0
-    local element_index = 1
-    local sublist_or_element = element[element_index]
+    local item_index = 1
+    local filtered_items = element:map(function (x)
+        return jog(x, filter, context)
+    end)
+    local sublist_or_element = filtered_items[item_index]
     while sublist_or_element ~= nil do
-      sublist_or_element = jog(sublist_or_element, filter, context)
       local tp = ptype(sublist_or_element)
       if listy_type[tp] or tp == 'table' then
         local subelement_index = 1
@@ -140,8 +142,8 @@ local function recurse (element, filter, context, tp)
         pos = pos + 1
         element[pos] = sublist_or_element
       end
-      element_index = element_index + 1
-      sublist_or_element = element[element_index]
+      item_index = item_index + 1
+      sublist_or_element = filtered_items[item_index]
     end
     -- unset remaining indices if the new list is shorter than the old
     pos = pos + 1

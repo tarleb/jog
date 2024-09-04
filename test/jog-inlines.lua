@@ -90,4 +90,15 @@ describe('Inline traversal', function()
       assert.equals(sample, result)
     end)
   end)
+
+  describe('modifying Inline elements', function ()
+    it('works if the filtered Str elements are doubled', function ()
+      local fn = function (str)
+        return {str, pandoc.Space(), str}
+      end
+      local result = jog(pandoc.Inlines('hello'), {Str = fn})
+      local expected = pandoc.Inlines('hello hello')
+      assert.equals(expected, result)
+    end)
+  end)
 end)
