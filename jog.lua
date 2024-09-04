@@ -11,7 +11,8 @@ local debug_getmetatable = debug.getmetatable
 local function ptype (x)
   local mt = debug_getmetatable(x)
   if mt then
-    return mt.__name -- mt.__name:gsub('pandoc ', '') doesn't seem to come up here?
+    local name = mt.__name
+    return name or type(x)
   else
     return type(x)
   end
