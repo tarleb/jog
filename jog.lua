@@ -1,6 +1,6 @@
 --- jog.lua – walk the pandoc AST with context, and with inplace modification.
 ---
---- Copyright: © 2021–2024 Albert Krewinkel
+--- Copyright: © 2024 Albert Krewinkel, Carlos Scheidegger
 --- License: MIT – see LICENSE for details
 
 local List = require 'pandoc.List'
