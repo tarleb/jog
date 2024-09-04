@@ -25,8 +25,8 @@ local listy_type = {
   List = true,
 }
 
---- Function to traverse the pandoc AST.
-local jog
+--- Function to traverse the pandoc AST with context.
+local jog_context
 
 local function run_filter_function (fn, element, context)
   if fn == nil then
@@ -93,34 +93,34 @@ local function recurse (element, filter, context, tp)
     -- do nothing, cannot traverse any deeper
   elseif tp == 'table' then
     for key, value in pairs(element) do
-      element[key] = jog(value, filter, context)
+      element[key] = jog_with_context(value, filter, context)
     end
   elseif content_only_node_tags[tag] or tp == 'Cell' then
-    element.content = jog(element.content, filter, context)
+    element.content = jog_with_context(element.content, filter, context)
   elseif tag == 'Image' then
-    element.caption = jog(element.caption, filter, context)
+    element.caption = jog_with_context(element.caption, filter, context)
   elseif tag == 'Table' then
-    element.caption = jog(element.caption, filter, context)
-    element.head    = jog(element.head, filter, context)
-    element.bodies  = jog(element.bodies, filter, context)
-    element.foot    = jog(element.foot, filter, context)
+    element.caption = jog_with_context(element.caption, filter, context)
+    element.head    = jog_with_context(element.head, filter, context)
+    element.bodies  = jog_with_context(element.bodies, filter, context)
+    element.foot    = jog_with_context(element.foot, filter, context)
   elseif tag == 'Figure' then
-    element.caption = jog(element.caption, filter, context)
-    element.content = jog(element.content, filter, context)
+    element.caption = jog_with_context(element.caption, filter, context)
+    element.content = jog_with_context(element.content, filter, context)
   elseif tp == 'Meta' then
     for key, value in pairs(element) do
-      element[key] = jog(value, filter, context)
+      element[key] = jog_with_context(value, filter, context)
     end
   elseif tp == 'Row' then
-    element.cells    = jog(element.cells, filter, context)
+    element.cells    = jog_with_context(element.cells, filter, context)
   elseif tp == 'TableHead' or tp == 'TableFoot' then
-    element.rows    = jog(element.rows, filter, context)
+    element.rows    = jog_with_context(element.rows, filter, context)
   elseif tp == 'Blocks' or tp == 'Inlines' then
     local expected_itemtype = tp == 'Inlines' and 'Inline' or 'Block'
     local pos = 0
     local filtered_index = 1
     local filtered_items = element:map(function (x)
-        return jog(x, filter, context)
+        return jog_with_context(x, filter, context)
     end)
     local item = filtered_items[filtered_index]
     local itemtype
@@ -156,12 +156,12 @@ local function recurse (element, filter, context, tp)
   elseif tp == 'List' then
     local i, item = 1, element[1]
     while item do
-      element[i] = jog(item, filter, context)
+      element[i] = jog_with_context(item, filter, context)
       i, item = i+1, element[i+1]
     end
   elseif tp == 'Pandoc' then
-    element.meta = jog(element.meta, filter, context)
-    element.blocks = jog(element.blocks, filter, context)
+    element.meta = jog_with_context(element.meta, filter, context)
+    element.blocks = jog_with_context(element.blocks, filter, context)
   else
     error("Don't know how to traverse " .. (element.t or tp))
   end
@@ -189,8 +189,7 @@ local function get_filter_function(element, filter, tp)
   end
 end
 
-jog = function (element, filter, context)
-  context = context or List{}
+jog_with_context = function (element, filter, context)
   context:insert(element)
   local tp = ptype(element)
   local result = nil
@@ -206,6 +205,10 @@ jog = function (element, filter, context)
 
   context:remove() -- remove this element from the context
   return result
+end
+
+local function jog(element, filter)
+  return jog_with_context(element, filter, List{})
 end
 
 --- Add `jog` as a method to all pandoc AST elements
