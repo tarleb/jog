@@ -36,12 +36,6 @@ local function run_filter_function (fn, element, context)
   local result = fn(element, context)
   if result == nil then
     return element
-  end
-  local tp = ptype(result)
-  if tp == 'Inline' then
-    return pandoc.Inlines{result}
-  elseif tp == 'Block' then
-    return pandoc.Blocks{result}
   else
     return result
   end
@@ -122,29 +116,36 @@ local function recurse (element, filter, context, tp)
   elseif tp == 'TableHead' or tp == 'TableFoot' then
     element.rows    = jog(element.rows, filter, context)
   elseif tp == 'Blocks' or tp == 'Inlines' then
+    local expected_itemtype = tp == 'Inlines' and 'Inline' or 'Block'
     local pos = 0
-    local item_index = 1
+    local filtered_index = 1
     local filtered_items = element:map(function (x)
         return jog(x, filter, context)
     end)
-    local sublist_or_element = filtered_items[item_index]
-    while sublist_or_element ~= nil do
-      local tp = ptype(sublist_or_element)
-      if listy_type[tp] or tp == 'table' then
-        local subelement_index = 1
-        local subsubelement = sublist_or_element[subelement_index]
-        while subsubelement ~= nil do
+    local item = filtered_items[filtered_index]
+    local itemtype
+    while item ~= nil do
+      itemtype = ptype(item)
+      if itemtype ~= expexted_itemtype then
+        item = pandoc[tp](item)
+        itemtype = tp
+      end
+      if itemtype == tp then
+        local sublist_index = 1
+        local sublistitem = item[sublist_index]
+        while sublistitem ~= nil do
           pos = pos + 1
-          element[pos] = subsubelement
-          subelement_index = subelement_index + 1
-          subsubelement = sublist_or_element[subelement_index]
+          element[pos]  = sublistitem
+          sublist_index = sublist_index + 1
+          sublistitem   = item[sublist_index]
         end
       else
+        -- not actually a sublist, just an element
         pos = pos + 1
-        element[pos] = sublist_or_element
+        element[pos] = sublist
       end
-      item_index = item_index + 1
-      sublist_or_element = filtered_items[item_index]
+      filtered_index = filtered_index + 1
+      item = filtered_items[filtered_index]
     end
     -- unset remaining indices if the new list is shorter than the old
     pos = pos + 1

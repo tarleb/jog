@@ -100,5 +100,13 @@ describe('Inline traversal', function()
       local expected = pandoc.Inlines('hello hello')
       assert.equals(expected, result)
     end)
+
+    it('works if the Inline function returns a string', function ()
+      local fn = function (str)
+        return str.text
+      end
+      local result = jog(pandoc.Inlines('eins zwo'), {Str = fn})
+      assert.equals(pandoc.Inlines('eins zwo'), result)
+    end)
   end)
 end)
