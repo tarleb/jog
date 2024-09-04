@@ -101,9 +101,7 @@ local function recurse (element, filter, context, tp)
       element[key] = jog(value, filter, context)
     end
   elseif content_only_node_tags[tag] or tp == 'Cell' then
-    local old_content = element.content
-    local new_content = jog(old_content, filter, context)
-    element.content = new_content
+    element.content = jog(element.content, filter, context)
   elseif tag == 'Image' then
     element.caption = jog(element.caption, filter, context)
   elseif tag == 'Table' then
@@ -179,11 +177,9 @@ local function get_filter_function(element, filter, tp)
   if non_joggable_types[tp] or tp == 'table' then
     return nil
   elseif tp == 'Block' then
-    local et = element.tag
-    return filter[et] or filter.Block
+    return filter[element.tag] or filter.Block
   elseif tp == 'Inline' then
-    local et = element.tag
-    return filter[et] or filter.Inline
+    return filter[element.tag] or filter.Inline
   else
     return filter[tp]
   end
