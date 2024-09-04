@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  # Run on all pull requests that change code.
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+  # Run every time a code change is pushed.
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        pandoc:
+          - edge
+          - latest
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    container:
+      image: pandoc/core:${{ matrix.pandoc }}-ubuntu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update --no-allow-insecure-repositories
+          apt-get install --assume-yes lua5.4 liblua5.4-dev luarocks make
+
+      - name: Install busted
+        run: luarocks-5.4 install busted
+
+      - name: Test
+        run: make test
