@@ -122,7 +122,7 @@ local function recurse (element, filter, context, tp)
     element.cells    = jog(element.cells, filter, context)
   elseif tp == 'TableHead' or tp == 'TableFoot' then
     element.rows    = jog(element.rows, filter, context)
-  elseif listy_type[tp] then
+  elseif tp == 'Blocks' or tp == 'Inlines' then
     local orig_len = #element
     local pos = 0
     local element_index = 1
@@ -149,6 +149,12 @@ local function recurse (element, filter, context, tp)
     -- unset remaining indices if the new list is shorter than the old
     for i = pos + 1, orig_len do
       element[i] = nil
+    end
+  elseif tp == 'List' then
+    local i, item = 1, element[1]
+    while item do
+      element[i] = jog(item, filter, context)
+      i, item = i+1, element[i+1]
     end
   elseif tp == 'Pandoc' then
     element.meta = jog(element.meta, filter, context)

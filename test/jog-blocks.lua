@@ -22,4 +22,21 @@ describe('Block traversal', function()
       assert.equals(pandoc.Plain('Plain->Inlines->Str'), result)
     end)
   end)
+
+  describe('jogging across BulletList elements', function ()
+    it('should not modify the element', function ()
+      local bl = pandoc.BulletList{
+        {pandoc.Para 'one', pandoc.Para 'two'},
+        {pandoc.Para 'three'},
+      }
+      -- ensure that the filter traverses all elements
+      local numstr = 0 -- number of Str elements
+      local fn = function () numstr = numstr + 1 end
+      local result = jog(bl, {Str = fn})
+      assert.equals(3, numstr)
+
+      -- The list should have stayed the same.
+      assert.equals(bl, result)
+    end)
+  end)
 end)
