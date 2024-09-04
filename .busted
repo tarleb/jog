@@ -1,0 +1,8 @@
+return {
+  default = {
+    ROOT    = {'test'},
+    lua     = 'pandoc-lua',
+    pattern = '.',  -- all files are tests
+    verbose = true,
+  },
+}
