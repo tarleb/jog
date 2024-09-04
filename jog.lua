@@ -123,7 +123,6 @@ local function recurse (element, filter, context, tp)
   elseif tp == 'TableHead' or tp == 'TableFoot' then
     element.rows    = jog(element.rows, filter, context)
   elseif tp == 'Blocks' or tp == 'Inlines' then
-    local orig_len = #element
     local pos = 0
     local element_index = 1
     local sublist_or_element = element[element_index]
@@ -147,8 +146,10 @@ local function recurse (element, filter, context, tp)
       sublist_or_element = element[element_index]
     end
     -- unset remaining indices if the new list is shorter than the old
-    for i = pos + 1, orig_len do
-      element[i] = nil
+    pos = pos + 1
+    while element[pos] do
+      element[pos] = nil
+      pos = pos + 1
     end
   elseif tp == 'List' then
     local i, item = 1, element[1]
