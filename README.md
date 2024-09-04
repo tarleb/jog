@@ -67,3 +67,37 @@ Features
   functions, `jog` also supports filtering on `List` elements and
   on table objects such as `Cell`, `Row`, `TableHead`, `TableFoot`
   (work in progress).
+
+Usage
+-----
+
+Download [`jog.lua`][joglua] and place where pandoc's Lua
+interpreter can find it. After that it can be *require*d as any
+other Lua library:
+
+``` lua
+local jog = require 'jog'
+```
+
+The library defines a function `jog` that will traverse the given object:
+
+``` lua
+jog.jog(ast_element, filter)
+```
+
+For convenience, the library object itself can also be used as a
+function, meaning the above can be shortened to `jog(ast_element,
+filter)`.
+
+### Adding `jog` methods to AST objects
+
+Run `jog.add_method([method_name])` to add a `jog` method to all
+"joggable" pandoc AST Lua objects:
+
+``` lua
+local jog = require 'jog'
+jog.add_method()
+pandoc.Pandoc{'Test'}:jog(my_filter)
+```
+
+[joglua]: https://raw.githubusercontent.com/tarleb/jog/main/jog.lua
