@@ -95,7 +95,7 @@ local function recurse (element, filter, context, tp)
     for key, value in pairs(element) do
       element[key] = jog_with_context(value, filter, context)
     end
-  elseif content_only_node_tags[tag] or tp == 'Cell' then
+  elseif content_only_node_tags[tag] or tp == 'pandoc Cell' then
     element.content = jog_with_context(element.content, filter, context)
   elseif tag == 'Image' then
     element.caption = jog_with_context(element.caption, filter, context)
@@ -111,9 +111,9 @@ local function recurse (element, filter, context, tp)
     for key, value in pairs(element) do
       element[key] = jog_with_context(value, filter, context)
     end
-  elseif tp == 'Row' then
+  elseif tp == 'pandoc Row' then
     element.cells    = jog_with_context(element.cells, filter, context)
-  elseif tp == 'TableHead' or tp == 'TableFoot' then
+  elseif tp == 'pandoc TableHead' or tp == 'pandoc TableFoot' then
     element.rows    = jog_with_context(element.rows, filter, context)
   elseif tp == 'Blocks' or tp == 'Inlines' then
     local expected_itemtype = tp == 'Inlines' and 'Inline' or 'Block'
@@ -207,7 +207,18 @@ jog_with_context = function (element, filter, context)
   return result
 end
 
+local element_name_map = {
+  Cell = 'pandoc Cell',
+  Row = 'pandoc Row',
+  TableHead = 'pandoc TableHead',
+  TableFoot = 'pandoc TableFoot',
+}
+
 local function jog(element, filter)
+  -- Table elements have a `pandoc ` prefix in the name
+  for from, to in pairs(element_name_map) do
+    filter[to] = filter[from]
+  end
   return jog_with_context(element, filter, List{})
 end
 
