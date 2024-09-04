@@ -10,7 +10,11 @@ local debug_getmetatable = debug.getmetatable
 --- Get the element type; like pandoc.utils.type, but faster.
 local function ptype (x)
   local mt = debug_getmetatable(x)
-  return mt and mt.__name:gsub('pandoc ', '') or type(x)
+  if mt then
+    return mt.__name -- mt.__name:gsub('pandoc ', '') doesn't seem to come up here?
+  else
+    return type(x)
+  end
 end
 
 --- Checks whether the object is a list type.
@@ -31,9 +35,11 @@ local function run_filter_function (fn, element, context)
   local result = fn(element, context)
   if result == nil then
     return element
-  elseif ptype(result) == 'Inline' then
+  end
+  local tp = ptype(result)
+  if tp == 'Inline' then
     return pandoc.Inlines{result}
-  elseif ptype(result) == 'Block' then
+  elseif tp == 'Block' then
     return pandoc.Blocks{result}
   else
     return result
@@ -84,36 +90,6 @@ local content_only_node_tags = {
   Note = true,
 }
 
---- Partially applied version of `jog`.
-local apply_jog = function (filter, context)
-  return function (element)
-    return jog(element, filter, context)
-  end
-end
-
---- Concatenate all items into the given target table.
-local function concat_into(items, target)
-  -- unset all numerical indices
-  local orig_len = #target
-  local pos = 0
-  for _, sublist_or_element in ipairs(items) do
-    local tp = ptype(sublist_or_element)
-    if listy_type[tp] or tp == 'table' then
-      for _, element in ipairs(sublist_or_element) do
-        pos = pos + 1
-        target[pos] = element
-      end
-    else
-      pos = pos + 1
-      target[pos] = sublist_or_element
-    end
-  end
-  -- unset remaining indices if the new list is shorter than the old
-  for i = pos + 1, orig_len do
-    target[i] = nil
-  end
-end
-
 --- Apply the filter on the nodes below the given element.
 local function recurse (element, filter, context, tp)
   tp = tp or ptype(element)
@@ -125,7 +101,9 @@ local function recurse (element, filter, context, tp)
       element[key] = jog(value, filter, context)
     end
   elseif content_only_node_tags[tag] or tp == 'Cell' then
-    element.content = jog(element.content, filter, context)
+    local old_content = element.content
+    local new_content = jog(old_content, filter, context)
+    element.content = new_content
   elseif tag == 'Image' then
     element.caption = jog(element.caption, filter, context)
   elseif tag == 'Table' then
@@ -142,11 +120,36 @@ local function recurse (element, filter, context, tp)
     end
   elseif tp == 'Row' then
     element.cells    = jog(element.cells, filter, context)
-  elseif List{'TableHead', 'TableFoot'}:includes(tp) then
+  elseif tp == 'TableHead' or tp == 'TableFoot' then
     element.rows    = jog(element.rows, filter, context)
   elseif listy_type[tp] then
-    local results = element:map(apply_jog(filter, context))
-    concat_into(results, element)
+    local orig_len = #element
+    local pos = 0
+    local element_index = 1
+    local sublist_or_element = element[element_index]
+    while sublist_or_element ~= nil do
+      sublist_or_element = jog(sublist_or_element, filter, context)
+      local tp = ptype(sublist_or_element)
+      if listy_type[tp] or tp == 'table' then
+        local subelement_index = 1
+        local subsubelement = sublist_or_element[subelement_index]
+        while subsubelement ~= nil do
+          pos = pos + 1
+          element[pos] = subsubelement
+          subelement_index = subelement_index + 1
+          subsubelement = sublist_or_element[subelement_index]
+        end
+      else
+        pos = pos + 1
+        element[pos] = sublist_or_element
+      end
+      element_index = element_index + 1
+      sublist_or_element = element[element_index]
+    end
+    -- unset remaining indices if the new list is shorter than the old
+    for i = pos + 1, orig_len do
+      element[i] = nil
+    end
   elseif tp == 'Pandoc' then
     element.meta = jog(element.meta, filter, context)
     element.blocks = jog(element.blocks, filter, context)
@@ -164,15 +167,16 @@ local non_joggable_types = {
   ['string'] = true,
 }
 
-local function get_filter_function(element, filter)
-  local tp = ptype(element)
+local function get_filter_function(element, filter, tp)
   local result = nil
   if non_joggable_types[tp] or tp == 'table' then
     return nil
   elseif tp == 'Block' then
-    return filter[element.t] or filter.Block
+    local et = element.tag
+    return filter[et] or filter.Block
   elseif tp == 'Inline' then
-    return filter[element.t] or filter.Inline
+    local et = element.tag
+    return filter[et] or filter.Inline
   else
     return filter[tp]
   end
@@ -188,7 +192,7 @@ jog = function (element, filter, context)
   elseif tp == 'table' then
     result = recurse(element, filter, context, tp)
   else
-    local fn = get_filter_function(element, filter)
+    local fn = get_filter_function(element, filter, tp)
     element = recurse(element, filter, context, tp)
     result = run_filter_function(fn, element, context)
   end
