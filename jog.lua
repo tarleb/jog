@@ -123,7 +123,8 @@ local function recurse (element, tp, jogger)
     local itemtype
     while item ~= nil do
       itemtype = ptype(item)
-      if itemtype ~= expexted_itemtype then
+      if itemtype ~= tp and itemtype ~= expected_itemtype then
+        -- neither the list type nor the list's item type. Try to convert.
         item = pandoc[tp](item)
         itemtype = tp
       end
@@ -139,7 +140,7 @@ local function recurse (element, tp, jogger)
       else
         -- not actually a sublist, just an element
         pos = pos + 1
-        element[pos] = sublist
+        element[pos] = item
       end
       filtered_index = filtered_index + 1
       item = filtered_items[filtered_index]
