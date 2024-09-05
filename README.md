@@ -69,8 +69,20 @@ Features
 
 - **More elements to filter on**: Beside the normal `walk` filter
   functions, `jog` also supports filtering on `List` elements and
-  on table objects such as `Cell`, `Row`, `TableHead`, `TableFoot`
-  (work in progress).
+  on table objects such as `Cell`, `Row`, `TableHead`,
+  `TableFoot`.
+
+  ``` lua
+  -- count table cells
+  local ncells = 0
+  local cellcounter = {
+    Cell = function (cell)
+      ncells = ncells + 1
+    end
+  }
+  jog(my_table, cellcounter)
+  -- `ncells` now contains the number of cells
+  ```
 
 Usage
 -----
