@@ -25,9 +25,6 @@ local listy_type = {
   List = true,
 }
 
---- Function to traverse the pandoc AST with context.
-local jog_context
-
 local function run_filter_function (fn, element, context)
   if fn == nil then
     return element
@@ -231,6 +228,7 @@ local element_name_map = {
   TableFoot = 'pandoc TableFoot',
 }
 
+--- Function to traverse the pandoc AST with context.
 local function jog(element, filter)
   -- Table elements have a `pandoc ` prefix in the name
   for from, to in pairs(element_name_map) do
