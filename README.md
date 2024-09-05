@@ -43,7 +43,7 @@ Features
   local jog = require 'jog'
 
   --- Return the tag (e.g., `Str`) or type (e.g. `Meta`) of an element.
-  local function tag_or_type = function (x)
+  local function tag_or_type (x)
       return x.t or pandoc.utils.type(x)
   end
 
@@ -83,7 +83,7 @@ other Lua library:
 local jog = require 'jog'
 ```
 
-The library defines a function `jog` that will traverse the given object:
+The library defines a function `jog` to traverse a given object:
 
 ``` lua
 jog.jog(ast_element, filter)
@@ -105,3 +105,40 @@ pandoc.Pandoc{'Test'}:jog(my_filter)
 ```
 
 [joglua]: https://raw.githubusercontent.com/tarleb/jog/main/jog.lua
+
+### Configuration
+
+How to trot along the AST can be configured by setting fields in
+the filter.
+
+- `context`: setting this to a truthy value will pass the element
+  context as a second argument to all filter functions.
+
+  Example:
+
+  ``` lua
+  local filter = {
+    context = true,
+    Inline = function (inln, context)
+      -- ...
+    end,
+  }
+  ```
+
+- `traverse`: sets the traversal order. The normal traversal is
+  *depth-first*. Set this to `topdown` to let nodes closer to the
+  root be filtered first. Filter functions can return `false` as a
+  second return value to signal to jog that it should not act on
+  subelements below the current node.
+
+  Example:
+
+  ``` lua
+  local filter = {
+    traverse = 'topdown',
+    Inline = function (inln, context)
+      -- ...
+      return inln, false   -- don't filter the subelements
+    end,
+  }
+  ```

@@ -33,11 +33,11 @@ local function run_filter_function (fn, element, context)
     return element
   end
 
-  local result = fn(element, context)
+  local result, continue = fn(element, context)
   if result == nil then
-    return element
+    return element, continue
   else
-    return result
+    return result, continue
   end
 end
 
@@ -190,28 +190,38 @@ local function get_filter_function(element, filter, tp)
 end
 
 local function make_jogger (filter, context)
-    local function jogger (element)
-      if context then
-        context:insert(element)
-      end
-      local tp = ptype(element)
-      local result = nil
-      if non_joggable_types[tp] then
-        result = element
-      elseif tp == 'table' then
-        result = recurse(element, tp, jogger)
-      else
-        local fn = get_filter_function(element, filter, tp)
-        element = recurse(element, tp, jogger)
-        result = run_filter_function(fn, element, context)
+  local is_topdown = filter.traverse == 'topdown'
+  local jogger
+
+  jogger = function (element)
+    if context then
+      context:insert(element)
+    end
+    local tp = ptype(element)
+    local result, continue = nil, true
+    if non_joggable_types[tp] then
+      result = element
+    elseif tp == 'table' then
+      result = recurse(element, tp, jogger)
+    else
+      local fn = get_filter_function(element, filter, tp)
+      if is_topdown then
+          result, continue = run_filter_function(fn, element, context)
+          if continue ~= false then
+            result = recurse(result, tp, jogger)
+          end
+        else
+          element = recurse(element, tp, jogger)
+          result = run_filter_function(fn, element, context)
+        end
       end
 
       if context then
         context:remove() -- remove this element from the context
       end
       return result
-    end
-    return jogger
+  end
+  return jogger
 end
 
 local element_name_map = {
