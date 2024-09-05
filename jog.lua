@@ -86,41 +86,41 @@ local content_only_node_tags = {
 }
 
 --- Apply the filter on the nodes below the given element.
-local function recurse (element, filter, context, tp)
+local function recurse (element, tp, jogger)
   tp = tp or ptype(element)
   local tag = element.tag
   if leaf_node_tags[tag] then
     -- do nothing, cannot traverse any deeper
   elseif tp == 'table' then
     for key, value in pairs(element) do
-      element[key] = jog_with_context(value, filter, context)
+      element[key] = jogger(value)
     end
   elseif content_only_node_tags[tag] or tp == 'pandoc Cell' then
-    element.content = jog_with_context(element.content, filter, context)
+    element.content = jogger(element.content)
   elseif tag == 'Image' then
-    element.caption = jog_with_context(element.caption, filter, context)
+    element.caption = jogger(element.caption)
   elseif tag == 'Table' then
-    element.caption = jog_with_context(element.caption, filter, context)
-    element.head    = jog_with_context(element.head, filter, context)
-    element.bodies  = jog_with_context(element.bodies, filter, context)
-    element.foot    = jog_with_context(element.foot, filter, context)
+    element.caption = jogger(element.caption)
+    element.head    = jogger(element.head)
+    element.bodies  = jogger(element.bodies)
+    element.foot    = jogger(element.foot)
   elseif tag == 'Figure' then
-    element.caption = jog_with_context(element.caption, filter, context)
-    element.content = jog_with_context(element.content, filter, context)
+    element.caption = jogger(element.caption)
+    element.content = jogger(element.content)
   elseif tp == 'Meta' then
     for key, value in pairs(element) do
-      element[key] = jog_with_context(value, filter, context)
+      element[key] = jogger(value)
     end
   elseif tp == 'pandoc Row' then
-    element.cells    = jog_with_context(element.cells, filter, context)
+    element.cells    = jogger(element.cells)
   elseif tp == 'pandoc TableHead' or tp == 'pandoc TableFoot' then
-    element.rows    = jog_with_context(element.rows, filter, context)
+    element.rows    = jogger(element.rows)
   elseif tp == 'Blocks' or tp == 'Inlines' then
     local expected_itemtype = tp == 'Inlines' and 'Inline' or 'Block'
     local pos = 0
     local filtered_index = 1
     local filtered_items = element:map(function (x)
-        return jog_with_context(x, filter, context)
+        return jogger(x)
     end)
     local item = filtered_items[filtered_index]
     local itemtype
@@ -156,12 +156,12 @@ local function recurse (element, filter, context, tp)
   elseif tp == 'List' then
     local i, item = 1, element[1]
     while item do
-      element[i] = jog_with_context(item, filter, context)
+      element[i] = jogger(item)
       i, item = i+1, element[i+1]
     end
   elseif tp == 'Pandoc' then
-    element.meta = jog_with_context(element.meta, filter, context)
-    element.blocks = jog_with_context(element.blocks, filter, context)
+    element.meta = jogger(element.meta)
+    element.blocks = jogger(element.blocks)
   else
     error("Don't know how to traverse " .. (element.t or tp))
   end
@@ -189,22 +189,29 @@ local function get_filter_function(element, filter, tp)
   end
 end
 
-jog_with_context = function (element, filter, context)
-  context:insert(element)
-  local tp = ptype(element)
-  local result = nil
-  if non_joggable_types[tp] then
-    result = element
-  elseif tp == 'table' then
-    result = recurse(element, filter, context, tp)
-  else
-    local fn = get_filter_function(element, filter, tp)
-    element = recurse(element, filter, context, tp)
-    result = run_filter_function(fn, element, context)
-  end
+local function make_jogger (filter, context)
+    local function jogger (element)
+      if context then
+        context:insert(element)
+      end
+      local tp = ptype(element)
+      local result = nil
+      if non_joggable_types[tp] then
+        result = element
+      elseif tp == 'table' then
+        result = recurse(element, tp, jogger)
+      else
+        local fn = get_filter_function(element, filter, tp)
+        element = recurse(element, tp, jogger)
+        result = run_filter_function(fn, element, context)
+      end
 
-  context:remove() -- remove this element from the context
-  return result
+      if context then
+        context:remove() -- remove this element from the context
+      end
+      return result
+    end
+    return jogger
 end
 
 local element_name_map = {
@@ -219,7 +226,8 @@ local function jog(element, filter)
   for from, to in pairs(element_name_map) do
     filter[to] = filter[from]
   end
-  return jog_with_context(element, filter, List{})
+  local jog_internal = make_jogger(filter, List{})
+  return jog_internal(element, filter, List{})
 end
 
 --- Add `jog` as a method to all pandoc AST elements
