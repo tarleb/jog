@@ -226,7 +226,8 @@ local function jog(element, filter)
   for from, to in pairs(element_name_map) do
     filter[to] = filter[from]
   end
-  local jog_internal = make_jogger(filter, List{})
+  local context = filter.context and List{} or nil
+  local jog_internal = make_jogger(filter, context)
   return jog_internal(element, filter, List{})
 end
 

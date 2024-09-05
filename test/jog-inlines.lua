@@ -23,7 +23,7 @@ describe('Inline traversal', function()
       local fn = function (s, context)
         s.text = table.concat(context:map(tag_or_type), '->')
       end
-      local result = jog(strong, {Str = fn})
+      local result = jog(strong, {Str = fn, context = true})
       assert.equals(pandoc.Strong('Strong->Inlines->Str'), result)
     end)
   end)

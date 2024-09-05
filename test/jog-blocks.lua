@@ -18,7 +18,7 @@ describe('Block traversal', function()
       local fn = function (s, context)
         s.text = table.concat(context:map(tag_or_type), '->')
       end
-      local result = jog(plain, {Str = fn})
+      local result = jog(plain, {Str = fn, context = true})
       assert.equals(pandoc.Plain('Plain->Inlines->Str'), result)
     end)
   end)

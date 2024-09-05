@@ -31,9 +31,10 @@ Features
   ```
 
 - **Context**: Filter functions sometimes depend on the context in
-  which the element is seen. The context, i.e., a list of all
-  parent element, is passed to the filter function as a second
-  argument.
+  which the element is seen. Jog allows to enable element contexts
+  by setting the `context` field in the filter to `true`. The
+  context, i.e., a list of all parent element, is passed to the
+  filter function as a second argument.
 
   E.g., the below filter prints the type of all context elements
   to stdout:
@@ -41,11 +42,14 @@ Features
   ``` lua
   local jog = require 'jog'
 
+  --- Return the tag (e.g., `Str`) or type (e.g. `Meta`) of an element.
   local function tag_or_type = function (x)
       return x.t or pandoc.utils.type(x)
   end
 
+  -- Lua filter to print the context of all Str elements.
   local print_context = {
+    context = true,                 -- enable element contexts
     Str = function (inln, context)
       print(table.concat(context:map(tag_or_type), ', '))
     end
