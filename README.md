@@ -1,8 +1,8 @@
 jog
 ===
 
-Traverse the pandoc AST; just like `walk`, but with element
-context and modified semantics.
+Traverse the pandoc AST; just like `walk`,  but with element
+contexts, more filter targets, and mutability semantics.
 
 Features
 --------
@@ -83,6 +83,36 @@ Features
   jog(my_table, cellcounter)
   -- `ncells` now contains the number of cells
   ```
+
+- **Performance**: *jog* is written with a strong focus on
+  performance. For example, let's consider an ad-hoc benchmark
+  using a filter that counts the number of strings in a document
+  with 36k words.
+
+  ``` lua
+  local nstr = 0
+  local filter = {Str = function (str) nstr = nstr + 1 end}
+  function Pandoc (doc)
+    runtime(doc:walk(filter))
+    runtime(jog(doc, filter))
+  end
+  ```
+
+  Runtimes:
+
+  | "walker"   | runtime   |
+  |------------|-----------|
+  | `:walk`    | 0.29      |
+  | `jog`      | 0.17      |
+
+  The relative difference can become even larger if multiple
+  filters are applied on the same object in sequence.
+
+  However, it should also be noted that `jog` is **not** always
+  faster than `:walk`.  There are filters for which `:walk`
+  outperforms `jog`, and *vice versa*. Jog performs particularly
+  well when a lot of elements need to be touched, while `:walk`
+  shines when the filtered elements are comparatively rare.
 
 Usage
 -----
