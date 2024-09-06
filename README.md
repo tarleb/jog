@@ -117,9 +117,14 @@ Features
 Usage
 -----
 
-Download [`jog.lua`][joglua] and place where pandoc's Lua
-interpreter can find it, or install it with `luarocks`. After that
-it can be *require*d as any other Lua library:
+Download [`jog.lua`][joglua] and place it where pandoc's Lua
+interpreter can find it, or install it with `luarocks`.
+
+```sh
+luarocks install --local jog
+```
+
+After that, *jog* can be `require`d as a normal other Lua library:
 
 ``` lua
 local jog = require 'jog'
