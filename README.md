@@ -102,8 +102,8 @@ Features
 
   | "walker"   | runtime   |
   |------------|-----------|
-  | `:walk`    | 0.29      |
-  | `jog`      | 0.17      |
+  | `:walk`    | 0.29 s    |
+  | `jog`      | 0.17 s    |
 
   The relative difference can become even larger if multiple
   filters are applied on the same object in sequence.
