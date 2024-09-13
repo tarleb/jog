@@ -23,4 +23,26 @@ describe('Blocks traversal', function()
       assert.same(pandoc.Blocks{pandoc.Plain(context_string)}, result)
     end)
   end)
+
+  describe('list splicing', function()
+    it('should splice list return values into the list', function ()
+      local blks = pandoc.Blocks {
+        pandoc.Plain('foo'),
+        pandoc.HorizontalRule(),
+        pandoc.Plain('bar')
+      }
+      local filter = {
+        HorizontalRule = function ()
+          return pandoc.Blocks{pandoc.Plain('one'), pandoc.Plain('two')}
+        end
+      }
+      local result = jog(blks, filter)
+      local expected = pandoc.Blocks{
+        pandoc.Plain'foo',
+        pandoc.Plain'one', pandoc.Plain'two',
+        pandoc.Plain'bar'
+      }
+      assert.same(expected, result)
+    end)
+  end)
 end)
