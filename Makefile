@@ -1,4 +1,6 @@
+BUSTED = busted-5.4
+
 .PHONY: test
 
 test:
-	busted test
+	$(BUSTED) test

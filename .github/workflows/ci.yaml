@@ -25,19 +25,14 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
 
     container:
-      image: pandoc/core:${{ matrix.pandoc }}-ubuntu
+      image: pandoc/core:${{ matrix.pandoc }}-alpine
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: |
-          apt-get update --no-allow-insecure-repositories
-          apt-get install --assume-yes lua5.4 liblua5.4-dev luarocks make
-
-      - name: Install busted
-        run: luarocks-5.4 install busted
+        run: apk add lua5.4-busted make
 
       - name: Test
-        run: make test
+        run: make test BUSTED=busted-5.4
