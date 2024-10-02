@@ -33,7 +33,7 @@ Features
 - **Context**: Filter functions sometimes depend on the context in
   which the element is seen. Jog allows to enable element contexts
   by setting the `context` field in the filter to `true`. The
-  context, i.e., a list of all parent element, is passed to the
+  context, i.e., a list of all parent elements, is passed to the
   filter function as a second argument.
 
   E.g., the below filter prints the type of all context elements
