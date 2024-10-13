@@ -204,20 +204,20 @@ local function make_jogger (filter, context)
     else
       local fn = get_filter_function(element, filter, tp)
       if is_topdown then
-          result, continue = run_filter_function(fn, element, context)
-          if continue ~= false then
-            result = recurse(result, tp, jogger)
-          end
-        else
-          element = recurse(element, tp, jogger)
-          result = run_filter_function(fn, element, context)
+        result, continue = run_filter_function(fn, element, context)
+        if continue ~= false then
+          result = recurse(result, tp, jogger)
         end
+      else
+        element = recurse(element, tp, jogger)
+        result = run_filter_function(fn, element, context)
       end
+    end
 
-      if context then
-        context:remove() -- remove this element from the context
-      end
-      return result
+    if context then
+      context:remove() -- remove this element from the context
+    end
+    return result
   end
   return jogger
 end
