@@ -238,6 +238,22 @@ local function jog(element, filter)
     filter[to] = filter[from]
   end
 
+  -- Check if we can just call Pandoc and Meta and be done
+  if ptype(element) == 'Pandoc' then
+    local must_recurse = false
+    for name in pairs(filter) do
+      if name:match'^[A-Z]' and name ~= 'Pandoc' and name ~= 'Meta' then
+        must_recurse = true
+        break
+      end
+    end
+    if not must_recurse then
+      element.meta = run_filter_function(filter.Meta, element.meta, context)
+      element = run_filter_function(filter.Pandoc, element, context)
+      return element
+    end
+  end
+
   -- Create and call traversal function
   local jog_internal = make_jogger(filter, context)
   return jog_internal(element)
