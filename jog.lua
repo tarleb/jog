@@ -3,7 +3,8 @@
 --- Copyright: © 2024 Albert Krewinkel, Carlos Scheidegger
 --- License: MIT – see LICENSE for details
 
-local List = require 'pandoc.List'
+local pandoc = require 'pandoc'
+local List   = require 'pandoc.List'
 
 local debug_getmetatable = debug.getmetatable
 
