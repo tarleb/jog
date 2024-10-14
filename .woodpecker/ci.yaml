@@ -1,0 +1,11 @@
+when:
+  - event: push
+
+steps:
+  - name: Test
+    image: pandoc/minimal:latest-alpine
+    commands:
+      # Install dependencies
+      - apk add lua5.4-busted
+      # Run tests
+      - busted-5.4
