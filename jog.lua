@@ -105,6 +105,9 @@ local function recurse (element, tp, jogger)
   elseif tag == 'Figure' then
     element.caption = jogger(element.caption)
     element.content = jogger(element.content)
+  elseif tp == 'Caption' then
+    element.short = jogger(element.short)
+    element.long = jogger(element.long)
   elseif tp == 'Meta' then
     for key, value in pairs(element) do
       element[key] = jogger(value)
