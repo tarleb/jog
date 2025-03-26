@@ -102,6 +102,14 @@ local function recurse (element, tp, jogger)
     element.head    = jogger(element.head)
     element.bodies  = jogger(element.bodies)
     element.foot    = jogger(element.foot)
+  elseif tp == 'TableHead' then
+    element.rows = jogger(element.rows)
+  elseif tp == 'TableFoot' then
+    element.rows = jogger(element.rows)
+  elseif tp == 'Row' then
+    element.cells = jogger(element.cells)
+  elseif tp == 'Cell' then
+    element.contents = jogger(element.contents)
   elseif tag == 'Figure' then
     element.caption = jogger(element.caption)
     element.content = jogger(element.content)
