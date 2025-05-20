@@ -102,10 +102,6 @@ local function recurse (element, tp, jogger)
     element.head    = jogger(element.head)
     element.bodies  = jogger(element.bodies)
     element.foot    = jogger(element.foot)
-  elseif tp == 'TableHead' then
-    element.rows = jogger(element.rows)
-  elseif tp == 'TableFoot' then
-    element.rows = jogger(element.rows)
   elseif tp == 'Row' then
     element.cells = jogger(element.cells)
   elseif tp == 'Cell' then
@@ -122,7 +118,8 @@ local function recurse (element, tp, jogger)
     end
   elseif tp == 'pandoc Row' then
     element.cells    = jogger(element.cells)
-  elseif tp == 'pandoc TableHead' or tp == 'pandoc TableFoot' then
+  elseif tp == 'pandoc TableHead' or tp == 'pandoc TableFoot'
+      or tp == 'TableHead' or tp == 'TableFoot' then
     element.rows    = jogger(element.rows)
   elseif tp == 'Blocks' or tp == 'Inlines' then
     local expected_itemtype = tp == 'Inlines' and 'Inline' or 'Block'
